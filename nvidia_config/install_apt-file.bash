@@ -1,3 +1,3 @@
-apt-get install apt-file
+apt install apt-file
 apt-file update
 
