@@ -11,6 +11,7 @@ def clean_list(list_file):
 def crypto_list():
     path = "../t-rex-0.26.8-linux/"
     list_file = os.listdir(path)
+    list_file.sort()
     list_file = clean_list(list_file)
     return(list_file)
 

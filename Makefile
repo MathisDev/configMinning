@@ -6,6 +6,6 @@ install:
 		bash config_driver/install_Nvidia_Legacy_Drivers.bash
 		bash config_driver/install_Nvidia_Drivers.bash
 
-min:
-		python3 minning.py
+miner:
+		@cd py_minning && python3 main.py
 	
