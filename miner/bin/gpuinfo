@@ -1,0 +1,184 @@
+#!/bin/bash
+
+# ==================================
+# = NVIDIA
+# ==================================
+
+if [[ $1 == "nvidia" ]]; then
+  TEST_NVIDIA=$(nvidia-smi -L)
+  TEST_AMD=""
+  if [[ $TEST_NVIDIA == *"GPU 0"* ]]; then
+    NVIDIA_NUM=$(nvidia-smi --query-gpu=count --format=csv,noheader | tail -n1)
+    NVIDIA_INUM=$((NVIDIA_NUM-1))
+    #NVIDIA_BRAND=$(lspci -vnn | grep VGA -A 12 | grep Subsystem | grep -vE "HD Graphics|USB" > /dev/shm/nvidia_list.txt)
+    lspci -vnn | grep NVIDIA -A 1 | grep VGA -A 1 | grep -vE "HD Graphics|USB|Processor" | grep Subsystem > /dev/shm/nvidia_list.txt
+    NVIDIA_BRAND=$(cat /dev/shm/nvidia_list.txt)
+    if [ -z "$NVIDIA_BRAND" ]; then
+         lspci -vnn | grep GeForce -A 1 | grep -vE "HD Graphics|USB|Processor" | grep Subsystem > /dev/shm/nvidia_list.txt
+    fi
+    NVIDIA_BRAND=$(cat /dev/shm/nvidia_list.txt)
+    if [ -z "$NVIDIA_BRAND" ]; then
+         lspci -vnn | grep VGA -A 1 | grep -vE "HD Graphics|USB|Processor" | grep Subsystem > /dev/shm/nvidia_list.txt
+    fi
+    NVIDIA_BRAND=$(cat /dev/shm/nvidia_list.txt)
+    x="0"
+    z="1"
+    JSON_EOF='{'
+    until [ $NVIDIA_NUM == "$x" ]; do
+      QUERY=$(nvidia-smi -i $x --query-gpu=name,temperature.gpu,fan.speed,power.draw,clocks.current.sm,clocks.current.memory,utilization.gpu,pci.bus_id,clocks.max.sm,clocks.max.memory,power.min_limit,power.max_limit,power.default_limit --format=csv,noheader | tail -n1)
+      JSON_EOF=$JSON_EOF'"'$x'":'
+
+      if [[ $NVIDIA_INUM == "$x" ]]; then
+        COMMA=""
+      else
+        COMMA=","
+      fi
+
+      BRAND=""
+      TEST_BRAND=$(cat /dev/shm/nvidia_list.txt | sed -n $z"p")
+      if [[ $TEST_BRAND == *"Gigabyte"* ]]; then
+        BRAND="Gigabyte "
+      elif [[ $TEST_BRAND == *"ASUS"* ]]; then
+        BRAND="ASUS "
+      elif [[ $TEST_BRAND == *"MSI"* ]]; then
+        BRAND="MSI "
+      elif [[ $TEST_BRAND == *"eVga"* ]]; then
+        BRAND="eVga "
+      elif [[ $TEST_BRAND == *"ZOTAC"* ]]; then
+        BRAND="ZOTAC "
+      elif [[ $TEST_BRAND == *"AMD"* ]]; then
+        BRAND="AMD "
+      elif [[ $TEST_BRAND == *"CardExpert"* ]]; then
+        BRAND="Gainward "
+      elif [[ $TEST_BRAND == *"Club 3D"* ]]; then
+        BRAND="Club 3D "
+      elif [[ $TEST_BRAND == *"HIS"* ]]; then
+        BRAND="HIS "
+      elif [[ $TEST_BRAND == *"Jetway"* ]]; then
+        BRAND="Jetway "
+      elif [[ $TEST_BRAND == *"XFX"* ]]; then
+        BRAND="XFX "
+      elif [[ $TEST_BRAND == *"PowerColor"* ]]; then
+        BRAND="PowerColor "
+      elif [[ $TEST_BRAND == *"VisionTek"* ]]; then
+        BRAND="VisionTek "
+      elif [[ $TEST_BRAND == *"INNO"* ]]; then
+        BRAND="INNO3D "
+      elif [[ $TEST_BRAND == *"PALIT"* ]]; then
+        BRAND="PALIT "
+      elif [[ $TEST_BRAND == *"COLORFUL"* ]]; then
+        BRAND="COLORFUL "
+      elif [[ $TEST_BRAND == *"GAINWARD"* ]]; then
+        BRAND="GAINWARD "
+      elif [[ $TEST_BRAND == *"PNY"* ]]; then
+        BRAND="PNY "
+      fi
+
+      JSON_EOF=$JSON_EOF'"'$BRAND$QUERY'"'$COMMA''
+      x=$((x+1))
+      z=$((z+1))
+    done
+    JSON_EOF=$JSON_EOF'}'
+    echo $JSON_EOF
+  fi
+fi
+
+# ==================================
+# = AMD
+# ==================================
+
+if [[ $1 == "amd" ]]; then
+
+  /home/minerstat/minerstat-os/bin/amdinfo
+
+fi
+
+# ==================================
+# = AMD with Voltages
+# ==================================
+
+if [[ $1 == "amd2" ]]; then
+
+TEST=$(cat /sys/class/drm/card0/device/pp_dpm_sclk)
+if [ -z "$TEST" ]; then
+ START="1"
+else
+ START="0"
+fi
+
+AMDINFO_ORIGINAL=$(sudo /home/minerstat/minerstat-os/bin/amdinfo)
+JQ_PATH="/home/minerstat/minerstat-os/bin/jq"
+AMD_NEW='{'
+for i in {0..15}
+do
+  I=$((i + $START))
+  STRING=$(echo $AMDINFO_ORIGINAL | $JQ_PATH -r .[\"$i\"])
+  if [ "$STRING" != "null" ]; then
+    AMD_NEW=$AMD_NEW'"'$i'":'
+    GPUID=$I
+    currentCoreState=$(sudo su -c "cat /sys/class/drm/card$GPUID/device/pp_dpm_sclk | grep '*' | cut -f1 -d':' | sed -r 's/.*([0-9]+).*/\1/' | sed 's/[^0-9]*//g'")
+    currentMemState=$(sudo su -c "cat /sys/class/drm/card$GPUID/device/pp_dpm_mclk | grep '*' | cut -f1 -d':' | sed -r 's/.*([0-9]+).*/\1/' | sed 's/[^0-9]*//g'")    
+    if [ "$currentCoreState" = "0" ]; then
+      currentCoreState="3"
+    fi
+    if [ "$currentMemState" = "0" ]; then
+      currentMemState="1"
+    fi
+    if [ -z "$currentCoreState" ]; then
+       currentCoreState="1"
+    fi
+    if [ -z "$currentMemState" ]; then
+       currentMemState="2"    
+    fi
+    #echo "Core State: $currentCoreState, Mem State: $currentMemState, "
+    
+    currentVDDC=$(sudo su -c "cat /sys/class/drm/card$GPUID/device/hwmon/hwmon?/in0_input")
+    
+    if [ -z "$currentVDDC" ]; then
+       currentVDDC=$(sudo su -c "cat /sys/class/drm/card$GPUID/device/hwmon/hwmon??/in0_input")
+    fi
+    
+    if [ -z "$currentVDDC" ]; then
+      currentVDDC=$(sudo su -c "cat /sys/class/drm/card$GPUID/device/pp_od_clk_voltage" | sed '/OD_MCLK/Q' | grep "$currentCoreState:" | awk '{ print $3 }' | sed 's/[^0-9]*//g' | cut -d ' ' -f 1 | xargs)
+    fi
+
+    if [ -z "$currentVDDC" ]; then
+      currentVDDC=$(sudo su -c "cat /sys/class/drm/card$GPUID/device/pp_od_clk_voltage" | sed '/OD_VDDC_CURVE/,$!d' | grep "$currentMemState:" | awk '{ print $3 }' | sed 's/[^0-9]*//g' | cut -d ' ' -f 1 | xargs) 
+    fi
+    
+    currentMVDD=$(timeout 10 sudo /home/minerstat/minerstat-os/bin/ohgodatool --show-mem -i $GPUID | grep -A 5 "$currentMemState:" | grep "MVDD" | sed 's/[^0-9]*//g' | cut -d ' ' -f 1 | xargs)
+    
+    if [ -z "$currentMVDD" ]; then
+      currentMVDD=$(sudo su -c "cat /sys/class/drm/card$GPUID/device/pp_od_clk_voltage" | sed '/OD_MCLK/,$!d' | grep "$currentMemState:" | awk '{ print $3 }' | sed 's/[^0-9]*//g' | cut -d ' ' -f 1 | xargs)   
+    fi
+    
+    if [ -z "$currentVDDC" ]; then
+      currentVDDC=0
+    fi
+    if [ -z "$currentMVDD" ]; then
+      currentMVDD=0
+    fi
+    #echo "VDDC: $currentVDDC, MVDD: $currentMVDD"
+    #echo
+    #echo $STRING
+    NEWSTRING="$STRING, $currentVDDC, $currentMVDD"
+    #echo $NEWSTRING
+    I=$((i + 1))
+    TEST=$(echo $AMDINFO_ORIGINAL | $JQ_PATH -r .[\"$I\"])
+    if [[ $TEST == "null" ]]; then
+      COMMA=""
+    else
+      COMMA=","
+    fi
+    AMD_NEW=$AMD_NEW'"'$NEWSTRING'"'$COMMA''
+  fi
+done
+AMD_NEW=$AMD_NEW'}'
+
+if [ -z "$AMD_NEW" ]; then
+  AMD_NEW="$AMDINFO_ORIGINAL"
+fi
+
+echo $AMD_NEW
+
+fi
