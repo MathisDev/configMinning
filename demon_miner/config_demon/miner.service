@@ -3,7 +3,7 @@ Description=t-rex_minning
 After=network.target
 
 [Service]
-ExecStart=/minning/t-rex_demon/t-rex_cfx.sh
+ExecStart=/minning/t-rex_demon/luncher_miner.sh
 Restart=always
 User=root
 Group=root
