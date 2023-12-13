@@ -1,10 +1,8 @@
 #!/bin/bash
-
 CONFIG_FILE="/minning/demon/demon.conf"
-PID_FILE="/var/run/t-rex.pid"
 
 function start_miner() {
-    /minning/t-rex_demon/t-rex $MINER_OPTIONS >> /log_miner/t-rex/cfx/log.txt &
+    /minning/t-rex_demon/t-rex $MINER_OPTIONS >> $PID_FIL &
     echo $! > $PID_FILE
 }
 
@@ -21,7 +19,7 @@ if [ -e $CONFIG_FILE ]; then
     source $CONFIG_FILE
     start_miner
 else
-    echo "Fichier de configuration $CONFIG_FILE non trouvé."
+    echo " $CONFIG_FILE not found "
     exit 1
 fi
 
