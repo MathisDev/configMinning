@@ -1,0 +1,12 @@
+[Unit]
+Description=T-Rex Miner Daemon
+After=network.target
+
+[Service]
+ExecStart=/minning/demon/t-rex_cfx.sh
+Restart=always
+User=root
+Group=root
+
+[Install]
+WantedBy=default.target
