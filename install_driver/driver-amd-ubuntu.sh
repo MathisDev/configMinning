@@ -14,16 +14,14 @@ sudo apt upgrade -y
 sudo apt install -y build-essential libgl1-mesa-dev
 
 # Téléchargement des pilotes AMD
-wget https://www2.ati.com/drivers/linux/amdgpu-pro-20.40-1147286-ubuntu-20.04.tar.xz
+# wget https://www2.ati.com/drivers/linux/amdgpu-pro-20.40-1147286-ubuntu-20.04.tar.xz
+# tar -Jxvf amdgpu-pro-20.40-1147286-ubuntu-20.04.tar.xz
+#cd amdgpu-pro-20.40-1147286-ubuntu-20.04
+#./amdgpu-install -y
 
-# Extraction des pilotes
-tar -Jxvf amdgpu-pro-20.40-1147286-ubuntu-20.04.tar.xz
-
-# Accéder au répertoire extrait
-cd amdgpu-pro-20.40-1147286-ubuntu-20.04
-
-# Installer les pilotes
-./amdgpu-install -y
+wget https://repo.radeon.com/amdgpu-install/23.30.2/ubuntu/focal/amdgpu-install_5.7.50702-1_all.deb
+sudo dpkg -i amdgpu-install_5.7.50702-1_all.deb
+sudo apt-get install -f
 
 # Redémarrer le système
 sudo reboot
