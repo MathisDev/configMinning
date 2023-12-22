@@ -15,4 +15,4 @@
 #       use the start_firo_testnet.sh script instead.
 #
 # Example:
-./teamredminer -a mtp_firopow -o stratum+tcp://firo.mintpond.com:3000 -u aPZL3WsQ1MAV4Ff16J4oEvCwzCpnzsn9j9 -p x
+./teamredminer -a mtp_firopow -o stratum+tcp://firo.mintpond.com:3000 -u  a3V9zpoPdP4d8fLSLTynTRG4qZ2BjwePEe -p x
