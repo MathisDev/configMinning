@@ -15,4 +15,5 @@ This project provides an automated script for setting up everything necessary to
 ### Usage
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your/repository.git
+   git clone https://github.com/MathisDev/configMinning.git
+   make
